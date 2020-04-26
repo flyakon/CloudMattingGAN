@@ -61,4 +61,17 @@ See also in [Requirements.txt](requirements.txt).
    				--result_path=result
    ``````
 
+# Citation
+
+If you find the code useful, please cite:
+
+``````
+@InProceedings{Zou_2019_ICCV,
+author = {Zou, Zhengxia and Li, Wenyuan and Shi, Tianyang and Shi, Zhenwei and Ye, Jieping},
+title = {Generative Adversarial Training for Weakly Supervised Cloud Matting},
+booktitle = {The IEEE International Conference on Computer Vision (ICCV)},
+month = {October},
+year = {2019}
+}
+``````
 
