@@ -20,16 +20,15 @@ See also in [Requirements.txt](requirements.txt).
 1. Clone this repo:
 
    ```
-   $CODE_PATH=path_to_code
-   git clone ssss $CODE_PATH
-   cd $CODE_PATH
+   git clone https://github.com/flyakon/CloudMattingGAN.git 
+   cd CloudMattingGAN
    ```
 
 2. Training Cloud Matting Net
 
    It is recommended firstly to train the Generative Adversarial Networks for 2000 steps.(Optional)
 
-   ``````python
+   ``````shell
    python cloud_generation.py --checkpoint_gan=model/LSGAN  \
    						   --gan_model=LSGAN \
    						   --sample_dir=sample \
@@ -39,7 +38,7 @@ See also in [Requirements.txt](requirements.txt).
 
 
 
-   ``````python
+   ``````shell
    python train.py --gan_model=LSGAN \
    				--batch_size=2 \
    				--model_path=model/CloudMattingNet_LSGAN \
@@ -55,7 +54,7 @@ See also in [Requirements.txt](requirements.txt).
 
 4. Test Cloud Matting Net
 
-   ``````
+   ``````shell
    python test.py  --model_path=model/CloudMattingNet_LSGAN \
    				--net_name=mattingnet  \
    				--testDataPath=dataset\test\thin_slice \
