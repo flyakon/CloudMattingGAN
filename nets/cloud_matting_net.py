@@ -38,8 +38,6 @@ class CloudMattingNet(object):
         self.testDataPath = params.testDataPath
         self.result_path=params.result_path
 
-
-
         self.interface=self.get_interface(self.net_name)
 
         self.data_prepare=MattingPrepare()
@@ -128,7 +126,7 @@ class CloudMattingNet(object):
                     endpoints['net7'] = nets
 
                 with tf.variable_scope('alpha_prediction'):
-                    # 透明度回归
+                    # alpha prediction
                     nets = endpoints['net7']
                     nets = slim.conv2d_transpose(nets, 512, [3, 3], stride=2, scope='conv_trans1') + endpoints['net6']
                     nets = slim.conv2d_transpose(nets, 512, [3, 3], stride=2, scope='conv_trans2') + endpoints['net5']
@@ -139,7 +137,7 @@ class CloudMattingNet(object):
                     alpha_logits = slim.conv2d(nets, self.alpha_channel, [3, 3], scope='pred', activation_fn=None)
 
                 with tf.variable_scope('reflectance_prediction'):
-                    # 前景图回归
+                    # reflectance prediction
                     nets = endpoints['net7']
                     nets = slim.conv2d_transpose(nets, 512, [3, 3], stride=2, scope='conv_trans1') + endpoints['net6']
                     nets = slim.conv2d_transpose(nets, 512, [3, 3], stride=2, scope='conv_trans2') + endpoints['net5']
@@ -176,7 +174,7 @@ class CloudMattingNet(object):
                     endpoints['net7'] = nets
 
                 with tf.variable_scope('alpha_prediction'):
-                    # 透明度回归
+                    # alpha prediction
                     nets = endpoints['net7']
                     nets = slim.conv2d_transpose(nets, 512, [3, 3], stride=2, scope='conv_trans1') + endpoints['net6']
                     nets = slim.conv2d_transpose(nets, 512, [3, 3], stride=2, scope='conv_trans2') + endpoints['net5']
@@ -187,7 +185,7 @@ class CloudMattingNet(object):
                     alpha_logits = slim.conv2d(nets, self.alpha_channel, [3, 3], scope='pred', activation_fn=None)
 
                 with tf.variable_scope('reflectance_prediction'):
-                    # 前景图回归
+                    # reflectance prediction
                     nets = endpoints['net7']
                     nets = slim.conv2d_transpose(nets, 512, [3, 3], stride=2, scope='conv_trans1') + endpoints['net6']
                     nets = slim.conv2d_transpose(nets, 512, [3, 3], stride=2, scope='conv_trans2') + endpoints['net5']
@@ -216,7 +214,7 @@ class CloudMattingNet(object):
             with tf.variable_scope('cloud_net', 'cloud_net', [inputs], reuse=reuse):
 
                 with tf.variable_scope('alpha_prediction'):
-                    # 透明度回归
+                    # alpha prediction
                     nets = resnet_endpoints['resnet_v2_50/block4']  # 64*64*2048
                     nets = slim.conv2d_transpose(nets, 512, kernel_size=[3, 3], stride=2) + resnet_endpoints[
                         'resnet_v2_50/block2/unit_2/bottleneck_v2']
@@ -230,7 +228,7 @@ class CloudMattingNet(object):
                     alpha_logits = slim.conv2d(nets, self.alpha_channel, [3, 3], scope='pred', activation_fn=None)
 
                 with tf.variable_scope('reflectance_prediction'):
-                    # 前景图回归
+                    # reflectance prediction
                     nets = resnet_endpoints['resnet_v2_50/block4']  # 64*64*2048
                     nets = slim.conv2d_transpose(nets, 512, kernel_size=[3, 3], stride=2) + resnet_endpoints[
                         'resnet_v2_50/block2/unit_2/bottleneck_v2']
@@ -435,7 +433,6 @@ class CloudMattingNet(object):
 
     def run_train_loop(self):
 
-
         params=init.TrainingParamInitialization()
         self.gan=CloudGAN(params)
         self.train_img, self.train_alpha, self.train_reflectance =\
@@ -494,6 +491,7 @@ class CloudMattingNet(object):
 
                 if np.mod(step, 500) == 1:
                     saver.save(sess, os.path.join(self.model_path, 'model'), step)
+                    
     def run_test_loop(self):
 
         print('prepare test data')
@@ -537,3 +535,5 @@ class CloudMattingNet(object):
                 print('test completely!')
                 print('time:%f' % (end - start))
             coord.join(threads=threads)
+            
+            
