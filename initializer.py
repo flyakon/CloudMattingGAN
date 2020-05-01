@@ -21,17 +21,17 @@ class TrainingParamInitialization():
         self.G_input_size = FLAGS.G_input_size
         self.batch_size = FLAGS.batch_size
 
-        self.g_learning_rate =FLAGS.g_learning_rate
+        self.g_learning_rate = FLAGS.g_learning_rate
         self.d_learning_rate = FLAGS.d_learning_rate
 
         self.gan_model = FLAGS.gan_model
-        if self.gan_model=='Vanilla_GAN':
+        if self.gan_model == 'Vanilla_GAN':
             self.d_clip=1e9
             self.optimizer = 'Adam'
-        elif self.gan_model=='W_GAN':
+        elif self.gan_model == 'W_GAN':
             self.d_clip = 0.05
             self.optimizer = 'RMSProp'
-        elif self.gan_model=='LSGAN':
+        elif self.gan_model == 'LSGAN':
             self.d_clip = 0.05
             self.optimizer = 'RMSProp'
         else:

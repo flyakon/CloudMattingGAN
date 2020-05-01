@@ -4,6 +4,7 @@ Description: Parameters Configuration
 Author: Wenyuan Li
 Date: Feb., 2019
 '''
+
 import tensorflow as tf
 
 #  Configuration parameters for Matting or Segment
