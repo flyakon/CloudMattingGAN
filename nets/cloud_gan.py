@@ -1,3 +1,10 @@
+'''
+Cloud Mating GAN
+Description: Cloud Matting Nets
+Author: Zhengxia Zou and Wenyuan Li
+Date: Feb., 2019
+'''
+
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
