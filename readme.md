@@ -4,9 +4,9 @@ __Generative Adversarial Training for Weakly Supervised Cloud Matting, in ICCV 2
 
 The detection and removal of cloud in remote sensing images are essential for earth observation applications. Most previous methods consider cloud detection as a pixel-wise semantic segmentation process (cloud v.s. background), which inevitably leads to a category-ambiguity problem when dealing with semi-transparent clouds. In this project, we re-examine the cloud detection under a totally different point of view, i.e. to formulate it as a mixed energy separation process between foreground and background images, which can be equivalently implemented under an image matting paradigm with a clear physical significance. We further propose a generative adversarial framework where the training of our model neither requires any pixel-wise ground truth reference nor any additional user interactions. Our model consists of three networks, a cloud generator G, a cloud discriminator D, and a cloud matting network F, where G and D aim to generate realistic and physically meaningful cloud images by adversarial training, and F learns to predict the cloud reflectance and attenuation. 
 
-In this repository, we implement the training and testing of the cloud matting model with tensorflow and also release the dataset we used in our paper. With the code, you can try on your own dataset by following the instructions below.
-
 ![Overview](fig/overview.png)
+
+In this repository, we implement the training and testing of the cloud matting model with tensorflow and also release the dataset we used in our paper. With the code, you can also try on your own dataset by following the instructions below.
 
 # Requirements
 
