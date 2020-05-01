@@ -21,26 +21,26 @@ import time
 
 class CloudMattingNet(object):
 
-    def __init__(self,params:init.TrainingParamInitialization):
+    def __init__(self, params:init.TrainingParamInitialization):
 
-        self.img_size=params.img_size
-        self.img_channel=params.img_channel
-        self.learning_rate=params.learning_rate
-        self.num_classes=params.num_classes
-        self.alpha_channel=params.alpha_channel
-        self.reflectance_channel=params.reflectance_channel
-        self.model_path=params.model_path
-        self.iter_step=params.iter_step
-        self.batch_size=params.batch_size
-        self.logdir=params.logdir
-        self.net_name=params.net_name
+        self.img_size = params.img_size
+        self.img_channel = params.img_channel
+        self.learning_rate = params.learning_rate
+        self.num_classes = params.num_classes
+        self.alpha_channel = params.alpha_channel
+        self.reflectance_channel = params.reflectance_channel
+        self.model_path = params.model_path
+        self.iter_step = params.iter_step
+        self.batch_size = params.batch_size
+        self.logdir = params.logdir
+        self.net_name = params.net_name
 
         self.testDataPath = params.testDataPath
-        self.result_path=params.result_path
+        self.result_path = params.result_path
 
-        self.interface=self.get_interface(self.net_name)
+        self.interface = self.get_interface(self.net_name)
 
-        self.data_prepare=MattingPrepare()
+        self.data_prepare = MattingPrepare()
 
     def get_interface(self,name):
         net_map = {'mattingnet': self.interface_cloudMattingNet,
@@ -50,7 +50,7 @@ class CloudMattingNet(object):
 
         return net_map[name]
 
-    def fcn_arg_scope(self,weight_decay=0.0005,is_training=True, data_format='NHWC',
+    def fcn_arg_scope(self, weight_decay=0.0005, is_training=True, data_format='NHWC',
                       normalizer_fn =slim.batch_norm):
         """Defines the fcn arg scope.
 
@@ -94,7 +94,7 @@ class CloudMattingNet(object):
             nets.set_shape([self.batch_size, shape2[1], shape2[2], shape2[3] + shape1[3]])
             return nets
 
-    def interface_cloudMattingNet(self,inputs, reuse=None, is_training=True):
+    def interface_cloudMattingNet(self, inputs, reuse=None, is_training=True):
         endpoints = {}
         with slim.arg_scope(self.fcn_arg_scope(is_training=is_training)):
             with tf.variable_scope('cloud_net', 'cloud_net', [inputs], reuse=reuse):
@@ -197,9 +197,7 @@ class CloudMattingNet(object):
                                                      activation_fn=None)
         return alpha_logits, reflectance_logits
 
-
-
-    def interface_resnet50(self,inputs,reuse=None,is_training=False):
+    def interface_resnet50(self, inputs, reuse=None, is_training=False):
 
         endpoints = {}
         with slim.arg_scope(resnet_arg_scope(use_batch_norm=True)):
@@ -243,7 +241,7 @@ class CloudMattingNet(object):
                                                      activation_fn=None)
         return alpha_logits, reflectance_logits
 
-    def interface_unet(self,inputs,reuse=None,is_training=True):
+    def interface_unet(self, inputs, reuse=None, is_training=True):
         endpoints = {}
         with slim.arg_scope(self.fcn_arg_scope(is_training=is_training)):
             with tf.variable_scope('cloud_net', 'cloud_net', [inputs], reuse=reuse):
@@ -287,8 +285,9 @@ class CloudMattingNet(object):
 
                     logits = slim.conv2d(nets, self.alpha_channel, [3, 3], padding='SAME',activation_fn=None)
                     alpha_logits = tf.image.resize_images(logits, [self.img_size, self.img_size])
+
                 with tf.variable_scope('reflectance_prediction'):
-                    nets=endpoints['net5']
+                    nets = endpoints['net5']
                     nets = slim.conv2d_transpose(nets, 512, [3, 3], stride=2)  # 50*50*512
                     nets = self.crop_and_concat(endpoints['net4'], nets)
                     nets = slim.repeat(nets, 2, slim.conv2d, 512, [3, 3])  # 46*46*512
@@ -307,24 +306,26 @@ class CloudMattingNet(object):
 
                     logits = slim.conv2d(nets, self.reflectance_channel, [3, 3], padding='SAME',activation_fn=None)
                     reflectance_logits = tf.image.resize_images(logits, [self.img_size, self.img_size])
+
             return alpha_logits,reflectance_logits
 
-    def calc_losses(self,alpha_logits,reflectance_loggits,alpha,reflectance):
+    def calc_losses(self, alpha_logits, reflectance_loggits, alpha, reflectance):
 
-        alpha_loss=tf.abs(alpha_logits-alpha)
-
-        alpha_loss=tf.reduce_mean(alpha_loss)
-        # alpha_loss=tf.reduce_mean(alpha_loss)
+        alpha_loss = tf.abs(alpha_logits-alpha)
+        alpha_loss = tf.reduce_mean(alpha_loss)
+        # alpha_loss = tf.reduce_mean(alpha_loss)
         tf.summary.scalar('alpha_loss', alpha_loss)
         reflectance_loss = tf.abs(reflectance_loggits - reflectance)
-        reflectance_loss=tf.reduce_mean(reflectance_loss)
-        # reflectance_loss=tf.reduce_mean(reflectance_loss)
+        reflectance_loss = tf.reduce_mean(reflectance_loss)
+        # reflectance_loss = tf.reduce_mean(reflectance_loss)
         tf.summary.scalar('reflectance_loss', reflectance_loss)
-        total_loss=alpha_loss+reflectance_loss
+        total_loss = alpha_loss+reflectance_loss
         tf.summary.scalar('total_loss', total_loss)
+
         return total_loss
 
-    def train_op(self,large_image,alpha,reflectance):
+    def train_op(self, large_image, alpha, reflectance):
+
         with tf.variable_scope(tf.get_variable_scope(), reuse=tf.AUTO_REUSE) as scope:
 
             global_step = tf.train.get_or_create_global_step()
@@ -340,32 +341,31 @@ class CloudMattingNet(object):
             if update_ops:
                 updates = tf.group(*update_ops)
                 loss = control_flow_ops.with_dependencies([updates], loss)
-            tf.summary.scalar('learning_rate',learning_rate)
-        return optimizer,loss,global_step
+            tf.summary.scalar('learning_rate', learning_rate)
+
+        return optimizer, loss, global_step
 
 
-    def test_op(self,large_image,reuse=None):
+    def test_op(self, large_image, reuse=None):
 
-        alpha_logits,reflectance_logits=self.interface(large_image,reuse=reuse,is_training=False)
+        alpha_logits, reflectance_logits = self.interface(large_image, reuse=reuse, is_training=False)
 
-        mask=alpha_logits<0
-        alpha_logits=tf.where(mask,tf.zeros_like(alpha_logits),alpha_logits)
-        mask = alpha_logits >1
+        mask = alpha_logits < 0
+        alpha_logits = tf.where(mask, tf.zeros_like(alpha_logits), alpha_logits)
+        mask = alpha_logits > 1
         alpha_logits = tf.where(mask, tf.ones_like(alpha_logits), alpha_logits)
 
-        mask=reflectance_logits>1
-        reflectance_logits=tf.where(mask,tf.ones_like(reflectance_logits),reflectance_logits)
-        mask = reflectance_logits <0
+        mask = reflectance_logits > 1
+        reflectance_logits = tf.where(mask, tf.ones_like(reflectance_logits), reflectance_logits)
+        mask = reflectance_logits < 0
         reflectance_logits = tf.where(mask, tf.zeros_like(reflectance_logits), reflectance_logits)
-        return [large_image[0],tf.cast(alpha_logits[0]*255,tf.uint8),
+        return [large_image[0], tf.cast(alpha_logits[0]*255, tf.uint8),
                 tf.cast(reflectance_logits[0] * 255, tf.uint8)]
 
-    def validate_op(self, large_image, alpha, reflectance,reuse=None):
+    def validate_op(self, large_image, alpha, reflectance, reuse=None):
 
-
-        alpha_logits, reflectance_logits = self.interface(large_image,reuse=reuse,is_training=False)
+        alpha_logits, reflectance_logits = self.interface(large_image, reuse=reuse, is_training=False)
         loss = self.calc_losses(alpha_logits, reflectance_logits, alpha, reflectance)
-
 
         mask = alpha_logits < 0
         alpha_logits = tf.where(mask, tf.zeros_like(alpha_logits), alpha_logits)
@@ -377,11 +377,12 @@ class CloudMattingNet(object):
         mask = reflectance_logits < 0
         reflectance_logits = tf.where(mask, tf.zeros_like(reflectance_logits), reflectance_logits)
 
-        return [large_image[0],tf.cast(alpha_logits[0]*255,tf.uint8),
+        return [large_image[0], tf.cast(alpha_logits[0]*255, tf.uint8),
                tf.cast(reflectance_logits[0] * 255, tf.uint8), loss]
 
 
     def prepare_test_data(self):
+
         testImage_list = self.data_prepare.prepare_unlabeledData(data_path=self.testDataPath, data_format='*.jpg')
 
         testImage_producer = tf.train.slice_input_producer([testImage_list], shuffle=False,
@@ -396,7 +397,7 @@ class CloudMattingNet(object):
         self.test_image = tf.expand_dims(testImage, axis=0)
         self.test_name = testImage_producer[0]
 
-    def load_checkpoints(self,sess):
+    def load_checkpoints(self, sess):
 
         if not os.path.exists(self.model_path):
             os.makedirs(self.model_path)
@@ -410,10 +411,9 @@ class CloudMattingNet(object):
             else:
                 print('load model error')
         else:
-
             self.gan.load_historical_model(sess)
             if 'vgg' in self.net_name:
-                model_file=os.path.join('model', 'vgg_16.ckpt')
+                model_file = os.path.join('model', 'vgg_16.ckpt')
                 if not os.path.exists(model_file):
                     print('no vgg16 model found, start training from scratch!')
                 else:
@@ -422,19 +422,19 @@ class CloudMattingNet(object):
                     saver = tf.train.Saver(variables_to_restore)
                     saver.restore(sess, model_file)
             elif 'resnet' in self.net_name:
-                model_file=os.path.join('model','resnet_v2_50.ckpt')
+                model_file = os.path.join('model', 'resnet_v2_50.ckpt')
                 if not os.path.exists(model_file):
                     print('no resnet50 model found, start training from scratch!')
                 else:
                     print('restore partial model resnet_v2_50')
                     variables_to_restore = utils.get_variables_to_restore(['resnet_v2_50'], ['Adam', 'Adam_1'])
                     saver = tf.train.Saver(variables_to_restore)
-                    saver.restore(sess,model_file)
+                    saver.restore(sess, model_file)
 
     def run_train_loop(self):
 
-        params=init.TrainingParamInitialization()
-        self.gan=CloudGAN(params)
+        params = init.TrainingParamInitialization()
+        self.gan = CloudGAN(params)
         self.train_img, self.train_alpha, self.train_reflectance =\
             self.data_prepare.preprocess(self.gan.G_sample, self.gan.G_alpha, self.gan.G_relectance)
         self.validate_img, self.validate_alpha, self.validate_reflectance = \
@@ -442,15 +442,15 @@ class CloudMattingNet(object):
 
         print('build matting net')
         with tf.name_scope('train'):
-            train_op=self.train_op(self.train_img,self.train_alpha,self.train_reflectance)
+            train_op = self.train_op(self.train_img, self.train_alpha, self.train_reflectance)
         with tf.name_scope('validate'):
-            validate_op=self.validate_op(self.validate_img,self.validate_alpha,self.validate_reflectance,reuse=True)
+            validate_op = self.validate_op(self.validate_img, self.validate_alpha, self.validate_reflectance, reuse=True)
 
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
         self.load_checkpoints(sess)
-        step=0
-        log_step=50
+        step = 0
+        log_step = 50
         saver = tf.train.Saver()
         merge_op = tf.summary.merge_all()
         summary_writer = tf.summary.FileWriter(self.logdir, sess.graph)
@@ -458,9 +458,9 @@ class CloudMattingNet(object):
         threads = tf.train.start_queue_runners(coord=coord, sess=sess)
         if not os.path.exists('rst'):
             os.mkdir('rst')
-        while step<self.iter_step:
+        while step < self.iter_step:
 
-                feed_dict=None
+                feed_dict = None
 
                 self.gan.run_train(sess)
                 X_mb = utils.get_batch(self.gan.data, self.batch_size, 'cloudimage', self.img_size)
@@ -471,7 +471,6 @@ class CloudMattingNet(object):
                 [_, train_loss, step] = sess.run(train_op, feed_dict=feed_dict)
 
                 if np.mod(step, log_step) == 1:
-
 
                     X_mb = utils.get_batch(self.gan.data, self.batch_size, 'cloudimage', self.img_size)
                     Z_mb = utils.get_batch(self.gan.data, self.batch_size, 'cloudimage', self.img_size)
@@ -535,5 +534,4 @@ class CloudMattingNet(object):
                 print('test completely!')
                 print('time:%f' % (end - start))
             coord.join(threads=threads)
-            
-            
+
