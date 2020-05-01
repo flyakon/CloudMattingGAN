@@ -13,22 +13,17 @@ import glob
 import initializer as init
 import matplotlib.pyplot as plt
 import tensorflow.contrib.slim as slim
-
-# All parameters used in this file
-
-
-
-import tensorflow as tf
-import tensorflow.contrib.slim as slim
 from collections import OrderedDict
 import os
 
+
 def reshape_list(data,shape=None):
-    result=[]
+
+    result = []
     if shape is None:
         for a in data:
-            if isinstance(a,(list,tuple)):
-                result+=list(a)
+            if isinstance(a, (list, tuple)):
+                result += list(a)
             else:
                 result.append(a)
     else:
@@ -39,23 +34,28 @@ def reshape_list(data,shape=None):
             else:
                 result.append(data[i:i + s])
             i += s
-    return  result
 
-def smooth_L1(x):
-    abs_x=tf.abs(x)
-    result=tf.where(abs_x<1,tf.square(x)*0.5,abs_x-0.5)
     return result
 
-def tensor_shape(x,rank=4):
+
+def smooth_L1(x):
+
+    abs_x = tf.abs(x)
+    result = tf.where(abs_x<1, tf.square(x)*0.5, abs_x-0.5)
+    return result
+
+
+def tensor_shape(x, rank=4):
+
     if x.get_shape().is_fully_defined():
         return x.get_shape().as_list()
     else:
-        static_shape=x.get_shape().with_rank(rank).as_list()
-        dynamic_shape=tf.unstack(tf.shape(x),rank)
-        return [s if s is not None else d for s,d in zip(static_shape,dynamic_shape)]
+        static_shape = x.get_shape().with_rank(rank).as_list()
+        dynamic_shape = tf.unstack(tf.shape(x), rank)
+        return [s if s is not None else d for s, d in zip(static_shape, dynamic_shape)]
 
-def get_variables_to_restore(
-        scope_to_include, suffix_to_exclude):
+
+def get_variables_to_restore(scope_to_include, suffix_to_exclude):
     """to parse which var to include and which
     var to exclude"""
 
@@ -67,10 +67,13 @@ def get_variables_to_restore(
     for scope in suffix_to_exclude:
         vars_to_exclude |= set(
             slim.get_variables_by_suffix(scope))
+
     return [v for v in vars_to_include if v not in vars_to_exclude]
+
 
 def remove_first_scope(name):
     return '/'.join(name.split('/')[1:])
+
 
 def collect_vars(scope, start=None, end=None, prepend_scope=None):
     vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=scope)
@@ -94,7 +97,8 @@ def collect_vars(scope, start=None, end=None, prepend_scope=None):
         var_dict[var_name] = var
     return var_dict
 
-def data_augmentation(batch,img_size):
+
+def data_augmentation(batch, img_size):
 
     batch_size = batch.shape[0]
 
@@ -140,8 +144,6 @@ def data_augmentation(batch,img_size):
     return batch
 
 
-
-
 def get_batch(DATA, batch_size, mode,img_size, with_data_augmentation=True):
 
     if mode is 'cloudimage':
@@ -167,8 +169,6 @@ def get_batch(DATA, batch_size, mode,img_size, with_data_augmentation=True):
     return batch
 
 
-
-
 def plot4x4(samples):
 
     IMG_SIZE = samples.shape[1]
@@ -183,8 +183,6 @@ def plot4x4(samples):
     return img_grid
 
 
-
-
 def plot2x2(samples):
 
     IMG_SIZE = samples.shape[1]
@@ -194,13 +192,10 @@ def plot2x2(samples):
     for i in range(len(samples)):
         py, px = IMG_SIZE * int(i / 2), IMG_SIZE * (i % 2)
         this_img = samples[i, :, :, :]
-        this_img=np.uint8(this_img*255)
+        this_img = np.uint8(this_img*255)
         img_grid[py:py + IMG_SIZE, px:px + IMG_SIZE, :] = this_img
 
     return img_grid
-
-
-
 
 
 def load_historical_model(sess, checkpoint_dir='checkpoints'):
@@ -222,9 +217,7 @@ def load_historical_model(sess, checkpoint_dir='checkpoints'):
         print('no historical model found, start training from scratch!')
 
 
-
-
-def load_images(image_dir,img_size):
+def load_images(image_dir, img_size):
 
     data = {
         'background_images': 0,
@@ -247,8 +240,8 @@ def load_images(image_dir,img_size):
         i += 1
         if np.mod(i, 20) == 0:
             print('reading background images: ' + str(i) + ' / ' + str(m_tr_imgs))
-    data['background_images'] = image_buff
 
+    data['background_images'] = image_buff
 
     # load thick cloud images
     img_dirs = glob.glob(os.path.join(image_dir, 'thick_slice/*.jpg'))
@@ -265,8 +258,6 @@ def load_images(image_dir,img_size):
         if np.mod(i, 20) == 0:
             print('reading thick cloud images: ' + str(i) + ' / ' + str(m_tr_imgs))
     data['thick_cloud_images'] = image_buff
-
-
 
     # load thin cloud images and masks
     img_dirs = glob.glob(os.path.join(image_dir, 'thin_slice/*.jpg'))
@@ -287,6 +278,3 @@ def load_images(image_dir,img_size):
     print('done done done')
 
     return data
-
-
-
