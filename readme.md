@@ -23,8 +23,9 @@ See also in [Requirements.txt](requirements.txt).
    git clone https://github.com/flyakon/CloudMattingGAN.git 
    cd CloudMattingGAN
    ```
+2. Here we have only given some demo data. The complete dataset can be downloaded from: 1) [Google Driver](); 2) [BaiduYun](https://pan.baidu.com/s/19szSlRpe4NNR_RcXQWfxqA) (Key: 9dmk).
 
-2. Training Cloud Matting Net
+3. Training Cloud Matting Net
 
    It is recommended firstly to train the Generative Adversarial Networks for 2000 steps.(Optional)
 
