@@ -1,7 +1,3 @@
-'''
-使用tinynet做为gan的生成器，输入是完整的图像，通过gan预测（生成）alpha和refectance
-使用基于resnet50的分类网络做为判别器
-'''
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
@@ -454,7 +450,4 @@ class CloudGAN(object):
 
                 save_path = os.path.join(self.result_dir, '{}'.format(str(i).zfill(5)) + '_' + str(jj) + '_alpha.png')
                 plt.imsave(save_path, alpha[jj, :, :, :])
-
-
-
 
