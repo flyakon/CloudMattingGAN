@@ -33,6 +33,7 @@ class MattingPrepare(object):
         dataSet = slim.dataset.Dataset(data_sources=dataSet_pattern, reader=tf.TFRecordReader,
                                        decoder=decoder, num_samples=numsamples, items_to_descriptions={})
         return dataSet
+
     def get_dataSet(self,dataSet_path,numsamples=50):
         dataSet_pattern=dataSet_path
         keys_to_features={
@@ -58,10 +59,8 @@ class MattingPrepare(object):
 
     def preprocess(self,image,alpha,matting=None,img_size=512,mode=0):
         """
-        对图片进行预处理：
-        :param image: 源图像
-        :param label: 标签图
-        :return: 返回三个尺寸的图像，large尺寸的标签图
+        Preprocessing operation for images：
+	resize the images and cast to float32
         """
         image=tf.image.convert_image_dtype(image,tf.float32)
         image=tf.image.resize_images(image,[img_size,img_size])
@@ -154,10 +153,7 @@ class MattingPrepare(object):
 
     def split_labels(self,label):
         """
-        将标签图(背景为0，云为128，雪为255)进行编码，得到三个标签图：云和背景；雪和背景；云雪和背景
-        背景为0；云为1；雪为(1)2
-        :param label: 
-        :return: 
+        To encode the label images: background to 0, cloud to 1
         """
         label=label[...,0]
         label=tf.cast(label*255,tf.uint8)
@@ -171,11 +167,7 @@ class MattingPrepare(object):
     def prepare_labeledData(self,data_path,data_format='*_[0-9].png',
                             reflectance_suffix='_reflectance.png',alpha_suffix='_alpha.png'):
         '''
-        获得带标签的图像的路径及标签的路径
-        要求图像与标签具有相同的文件名，存放在不同的文件夹中
-        :param data_path: 图像文件的保存文件夹,nask_label(label)、reflectance_label和alpha_label在一个文件夹中
-        :param data_format:图像的格式，支持通配符
-        :return: 返回图像路径和标签图像路径列表
+        To access the dir of each image in the data_path
         '''
         data_list=[]
         reflectance_list=[]
@@ -202,10 +194,7 @@ class MattingPrepare(object):
 
     def prepare_unlabeledData(self,data_path,data_format='*.png'):
         '''
-        获得测试图像的路径
-        :param data_path: 
-        :param data_format: 
-        :return: 
+        To access the dir of each testing image from the data_path 
         '''
         data_list=[]
         data_files = glob.glob(os.path.join(data_path,data_format))
@@ -218,11 +207,9 @@ class SegmentPrepare(object):
 
     def preprocess(self,image, label=None, img_size=512):
         """
-		对图片进行预处理：
-		:param image: 源图像
-		:param label: 标签图
-		:return: 返回三个尺寸的图像，large尺寸的标签图
-		"""
+	Preprocessing operation for images：
+	resize the images and cast to float32
+	"""
         image = tf.image.convert_image_dtype(image, tf.float32)
         image = tf.image.resize_images(image, [img_size, img_size])
         if label is not None:
@@ -245,7 +232,6 @@ class SegmentPrepare(object):
 
     def rot90(self,img, label):
         img = tf.image.rot90(img)
-
         label = tf.image.rot90(label)
 
         return img, label
@@ -256,9 +242,7 @@ class SegmentPrepare(object):
         offset = tf.random_uniform([2], 0, img_size + 1 - size, dtype=tf.int32)
 
         img = tf.image.crop_to_bounding_box(img, offset[0], offset[1], size, size)
-
         label = tf.image.crop_to_bounding_box(label, offset[0], offset[1], size, size)
-
 
         img = tf.image.resize_images(img, [img_size, img_size])
         label = tf.image.resize_images(label, [img_size, img_size],tf.image.ResizeMethod.NEAREST_NEIGHBOR)
@@ -271,11 +255,9 @@ class SegmentPrepare(object):
 
     def distorted_colors(self,image, color_ordering):
         """
-        根据color_ordering的不同，对图像的亮度、对比度、颜色和饱和度进行变化
-        :param image: 输入的图片
-        :param color_ordering: 
-        :return: 
+        To adjust the brightness, contrast, hue, and saturation of the input images
         """
+	
         print(color_ordering)
         if color_ordering == 0:
             image = tf.image.random_brightness(image, max_delta=32. / 255.)
@@ -337,11 +319,8 @@ class SegmentPrepare(object):
 
     def split_labels(self,label):
         """
-		将标签图(背景为0，云为128，雪为255)进行编码，得到三个标签图：云和背景；雪和背景；云雪和背景
-		背景为0；云为1；雪为(1)2
-		:param label: 
-		:return: 
-		"""
+        To encode the label images: background to 0, cloud to 1
+        """
         label = label[..., 0]
         label = tf.cast(label * 255, tf.uint8)
         label = tf.cast(label, tf.int64)
@@ -352,12 +331,8 @@ class SegmentPrepare(object):
 
     def prepare_labeledData(self,data_path, data_format='*_[0-9].png', label_suffix='.png'):
         '''
-		获得带标签的图像的路径及标签的路径
-		要求图像与标签具有相同的文件名，存放在不同的文件夹中
-		:param data_path: 图像文件的保存文件夹,nask_label(label)、reflectance_label和alpha_label在一个文件夹中
-		:param data_format:图像的格式，支持通配符
-		:return: 返回图像路径和标签图像路径列表
-		'''
+        To access the dir of each image in the data_path
+        '''
         data_list = []
         label_list = []
 
@@ -379,11 +354,8 @@ class SegmentPrepare(object):
 
     def prepare_unlabeledData(self,data_path, data_format='*.png'):
         '''
-		获得测试图像的路径
-		:param data_path: 
-		:param data_format: 
-		:return: 
-		'''
+        To access the dir of each testing image from the data_path 
+        '''
         data_list = []
         data_files = glob.glob(os.path.join(data_path, data_format))
         for data_file in data_files:
