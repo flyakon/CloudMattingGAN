@@ -1,7 +1,10 @@
 '''
-使用tinynet做为gan的生成器，输入是完整的图像，通过gan预测（生成）alpha和refectance
-使用基于resnet50的分类网络做为判别器
+Cloud Mating GAN
+Description: Cloud Matting Nets
+Author: Zhengxia Zou and Wenyuan Li
+Date: Feb., 2019
 '''
+
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
@@ -15,8 +18,7 @@ from utils import utils
 
 class CloudGAN(object):
 
-
-    def __init__(self,params:init.TrainingParamInitialization):
+    def __init__(self, params:init.TrainingParamInitialization):
 
         self.img_size = params.img_size
         self.img_channel = params.img_channel
@@ -31,32 +33,26 @@ class CloudGAN(object):
         self.checkpoint_gan = params.checkpoint_gan
         self.sample_dir = params.sample_dir
 
-        self.result_dir=params.result_dir
-
+        self.result_dir = params.result_dir
 
         self.g_learning_rate = params.g_learning_rate
         self.d_learning_rate = params.d_learning_rate
-        self.d_clip = params.d_clip         #生成器梯度限幅
-        self.gan_model = params.gan_model   #gan的类型valinila、WGAN和LSGAN
-        self.optimizer=params.optimizer
-
-
+        self.d_clip = params.d_clip         # gradient clip on the generater
+        self.gan_model = params.gan_model   # valinila gan, WGAN, and LSGAN
+        self.optimizer = params.optimizer
 
         self.X = tf.placeholder(tf.float32, shape=[None, self.img_size, self.img_size, self.img_channel])
         self.Z = tf.placeholder(tf.float32, shape=[None, self.img_size, self.img_size, self.img_channel])
         self.BG = tf.placeholder(tf.float32, shape=[None, self.img_size, self.img_size, self.img_channel])
 
-        self.mm=1
-
-        self.iter_step=params.iter_step
+        self.iter_step = params.iter_step
         self.data = utils.load_images(self.image_dir, self.img_size)
 
         print('start building GAN graphics...')
         self.build_graphics()
 
+    def generator(self, Z, BG, reuse=None):
 
-
-    def generator(self,Z, BG,reuse=None):
         if (reuse):
             tf.get_variable_scope().reuse_variables()
 
@@ -130,10 +126,8 @@ class CloudGAN(object):
 
         return sample, reflectance, alpha
 
+    def discriminator(self, x, reuse=False):
 
-
-
-    def discriminator(self,x, reuse=False):
         if (reuse):
             tf.get_variable_scope().reuse_variables()
 
@@ -170,27 +164,26 @@ class CloudGAN(object):
                 net = slim.flatten(net)
 
                 net = slim.fully_connected(net, 512)
+
                 D_logit = slim.fully_connected(net, 1, activation_fn=None)
                 D_prob = tf.nn.sigmoid(D_logit)
 
         return D_logit, D_prob
 
-    def calc_loss(self,D_logits_real,D_logits_fake,G_relectance):
+    def calc_loss(self, D_logits_real, D_logits_fake, G_relectance):
 
         max_rgb_value = tf.reduce_max(G_relectance, axis=-1)
         min_rgb_value = tf.reduce_min(G_relectance, axis=-1)
         S_value = (max_rgb_value - min_rgb_value) / (max_rgb_value + 1e-3)
         penalty = 1. * tf.norm(S_value)
-        #### WGAN
-        if self.gan_model is 'W_GAN':
 
+        if self.gan_model is 'W_GAN': # WGAN
             D_loss = - (tf.reduce_mean(D_logits_real) - tf.reduce_mean(D_logits_fake))
             G_loss = - tf.reduce_mean(D_logits_fake)+penalty
             tf.summary.scalar('D_loss', D_loss)
             tf.summary.scalar('G_loss', G_loss)
-        #### Vanilla_GAN
-        elif self.gan_model=='Vanilla_GAN':
 
+        elif self.gan_model is 'Vanilla_GAN': # Vanilla_GAN
             D_loss_real = tf.reduce_mean(
                 tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logits_real, labels=tf.ones_like(D_logits_real)))
             D_loss_fake = tf.reduce_mean(
@@ -200,14 +193,16 @@ class CloudGAN(object):
                 labels=tf.ones_like(D_logits_fake))) + penalty
             tf.summary.scalar('D_loss', D_loss)
             tf.summary.scalar('G_loss', G_loss)
-        else:
+
+        else: # LS_GAN
             D_loss = 0.5 * (tf.reduce_mean((D_logits_real - 1)**2) + tf.reduce_mean(D_logits_fake**2))
             G_loss = 0.5 * tf.reduce_mean((D_logits_fake - 1)**2)+penalty
             tf.summary.scalar('D_loss', D_loss)
             tf.summary.scalar('G_loss', G_loss)
-        return G_loss,D_loss
 
-    def load_historical_model(self,sess):
+        return G_loss, D_loss
+
+    def load_historical_model(self, sess):
 
         # check and create model dir
         if os.path.exists(self.checkpoint_gan) is False:
@@ -231,7 +226,8 @@ class CloudGAN(object):
         G_sample, G_relectance, G_alpha = self.generator(self.Z, self.BG)
         D_logits_real, D_prob_real = self.discriminator(self.X)
         D_logits_fake, D_prob_fake = self.discriminator(G_sample, reuse=True)
-        G_loss,D_loss=self.calc_loss(D_logits_real,D_logits_fake,G_relectance)
+
+        G_loss, D_loss = self.calc_loss(D_logits_real, D_logits_fake, G_relectance)
 
         tvars = tf.trainable_variables()
         theta_D = [var for var in tvars if 'Discriminator_scope' in var.name]
@@ -271,10 +267,9 @@ class CloudGAN(object):
         if not os.path.exists(self.sample_dir):
             os.makedirs(self.sample_dir)
 
-
         g_iter = 0
         d_iter = 0
-        mm = 1
+        mm = 1  # number of G_steps per D_step
 
         while g_iter < self.iter_step:
 
@@ -288,6 +283,9 @@ class CloudGAN(object):
             # write states to summary
             summary_writer.add_summary(summary, g_iter)
 
+            # To stabilize training, we train multiple steps (mm) on G if D loss is less than a pre-defined
+            # threshold, say, 0.1. We found this simple mofification on the training config greatly prevents
+            # from model collapse.
             if D_loss_curr < 0.1:
                 mm = mm + 5
             else:
@@ -306,13 +304,12 @@ class CloudGAN(object):
                     samples, reflectance, alpha = sess.run([G_sample, G_relectance, G_alpha],
                         feed_dict={self.Z: Z_mb, self.BG: BG_mb})
 
-
-                    samples=np.array(samples*255,np.uint8)
-                    reflectance=np.array(reflectance*255,np.uint8)
-                    alpha=np.array(alpha*255,np.uint8)
-                    BG=np.array(BG_mb*255,np.uint8)
+                    samples = np.array(samples*255, np.uint8)
+                    reflectance = np.array(reflectance*255, np.uint8)
+                    alpha = np.array(alpha*255, np.uint8)
+                    BG = np.array(BG_mb*255, np.uint8)
                     for jj in range(self.batch_size):
-                        i=g_iter
+                        i = g_iter
                         save_path = os.path.join(self.sample_dir,
                                                  '{}'.format(str(i).zfill(5)) + '_' + str(jj) + '.jpg')
                         plt.imsave(save_path, samples[jj, :, :, :])
@@ -323,6 +320,7 @@ class CloudGAN(object):
 
                         save_path = os.path.join(self.sample_dir,'{}'.format(str(i).zfill(5)) + '_' + str(jj) + '_alpha.png')
                         plt.imsave(save_path, alpha[jj, :, :, :])
+
                         save_path = os.path.join(self.sample_dir,'{}'.format(str(i).zfill(5)) + '_' + str(jj) + '_BG.png')
                         plt.imsave(save_path, BG[jj, :, :, :])
 
@@ -330,13 +328,10 @@ class CloudGAN(object):
                     print('D_loss = %g, G_loss = %g' % (D_loss_curr, G_loss_curr))
                     print('g_iter = %d, d_iter = %d, n_g/d = %d' % (g_iter, d_iter, mm))
 
-
                 # save model every 500 g_iters
                 if np.mod(g_iter, 500) == 1 and g_iter > 1:
                     print('saving model to checkpoint ...')
                     saver.save(sess, os.path.join(self.checkpoint_gan, 'G_step'), global_step=G_steps)
-
-
 
     def build_graphics(self):
 
@@ -374,7 +369,7 @@ class CloudGAN(object):
             self.clip_D = [p.assign(tf.clip_by_value(p, -self.d_clip, self.d_clip)) for p in theta_D]
 
 
-    def run_train(self,sess):
+    def run_train(self, sess):
 
         X_mb = utils.get_batch(self.data, self.batch_size, 'cloudimage', self.img_size)
         Z_mb = utils.get_batch(self.data, self.batch_size, 'cloudimage', self.img_size)
@@ -387,12 +382,13 @@ class CloudGAN(object):
         if not os.path.exists(self.sample_dir):
             os.mkdir(self.sample_dir)
 
+        mm = 1
         if D_loss_curr < 0.1:
-            self.mm = self.mm + 1
+            mm = mm + 1
         else:
-            self.mm = 1
+            mm = 1
 
-        for _ in range(self.mm):
+        for _ in range(mm):
             X_mb = utils.get_batch(self.data, self.batch_size, 'cloudimage', self.img_size)
             Z_mb = utils.get_batch(self.data, self.batch_size, 'cloudimage', self.img_size)
             BG_mb = utils.get_batch(self.data, self.batch_size, 'background', self.img_size)
@@ -420,11 +416,12 @@ class CloudGAN(object):
 
             if g_iter % 50 == 0:
                 print('D_loss = %g, G_loss = %g' % (D_loss_curr, G_loss_curr))
-                print('g_iter = %d, d_iter = %d, n_g/d = %d' % (g_iter, d_iter, self.mm))
+                print('g_iter = %d, d_iter = %d, n_g/d = %d' % (g_iter, d_iter, mm))
                 print()
 
 
     def run_test_loop(self):
+
         G_sample, G_relectance, G_alpha = self.generator(self.Z, self.BG)
 
         sess = tf.Session()
@@ -454,7 +451,4 @@ class CloudGAN(object):
 
                 save_path = os.path.join(self.result_dir, '{}'.format(str(i).zfill(5)) + '_' + str(jj) + '_alpha.png')
                 plt.imsave(save_path, alpha[jj, :, :, :])
-
-
-
 

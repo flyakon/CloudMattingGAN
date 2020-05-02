@@ -4,11 +4,10 @@ Description: Parameters Configuration
 Author: Wenyuan Li
 Date: Feb., 2019
 '''
+
 import tensorflow as tf
 
 #  Configuration parameters for Matting or Segment
-
-
 tf.app.flags.DEFINE_string('testDataPath',r'dataset\test\thin_slice','test data path for matting')
 tf.app.flags.DEFINE_string('model_path',r'model\cloud_mating_model','')
 tf.app.flags.DEFINE_string('logdir',r'log\cloud_mating_log','')
