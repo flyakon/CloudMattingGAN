@@ -25,7 +25,7 @@ See also in [Requirements.txt](requirements.txt).
    git clone https://github.com/flyakon/CloudMattingGAN.git 
    cd CloudMattingGAN
    ```
-2. Here we only upload a small part of our dataset. The complete dataset can be downloaded from: 1) [Google Driver](); 2) [BaiduYun](https://pan.baidu.com/s/19szSlRpe4NNR_RcXQWfxqA) (Key: 9dmk).
+2. Here we only upload a small part of our dataset. The complete dataset can be downloaded from: 1) [Google Drive](https://drive.google.com/file/d/1NXmIxVt2kO9NNrNy-4JaMbyLOJeXS0kx/view?usp=sharing); 2) [BaiduYun](https://pan.baidu.com/s/19szSlRpe4NNR_RcXQWfxqA) (Key: 9dmk).
 
 3. Train Cloud Matting Net
 
