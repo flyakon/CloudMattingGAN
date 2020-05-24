@@ -73,13 +73,6 @@ class CloudMattingNet(object):
 
                     return sc
 
-    def unet_args_cope(self, weight_decay=0.0005, data_format='NHWC'):
-        with slim.arg_scope([slim.conv2d, slim.conv2d_transpose], weights_regularizer=slim.l2_regularizer(weight_decay),
-                            padding='VALID'):
-            with slim.arg_scope([slim.max_pool2d, slim.conv2d_transpose], padding='SAME',
-                                data_format=data_format) as sc:
-                return sc
-
     def crop_and_concat(self, x1, x2):
         with tf.name_scope("crop_and_concat"):
             x1_shape = tf.shape(x1)

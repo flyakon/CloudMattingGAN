@@ -6,53 +6,17 @@ Date: Feb., 2019
 """
 
 import numpy as np
-import os
 import tensorflow as tf
 import cv2
 import glob
-import initializer as init
-import matplotlib.pyplot as plt
 import tensorflow.contrib.slim as slim
 from collections import OrderedDict
 import os
 
 
-def reshape_list(data,shape=None):
-
-    result = []
-    if shape is None:
-        for a in data:
-            if isinstance(a, (list, tuple)):
-                result += list(a)
-            else:
-                result.append(a)
-    else:
-        i = 0
-        for s in shape:
-            if s == 1:
-                result.append(data[i])
-            else:
-                result.append(data[i:i + s])
-            i += s
-
-    return result
 
 
-def smooth_L1(x):
 
-    abs_x = tf.abs(x)
-    result = tf.where(abs_x<1, tf.square(x)*0.5, abs_x-0.5)
-    return result
-
-
-def tensor_shape(x, rank=4):
-
-    if x.get_shape().is_fully_defined():
-        return x.get_shape().as_list()
-    else:
-        static_shape = x.get_shape().with_rank(rank).as_list()
-        dynamic_shape = tf.unstack(tf.shape(x), rank)
-        return [s if s is not None else d for s, d in zip(static_shape, dynamic_shape)]
 
 
 def get_variables_to_restore(scope_to_include, suffix_to_exclude):
@@ -169,18 +133,7 @@ def get_batch(DATA, batch_size, mode,img_size, with_data_augmentation=True):
     return batch
 
 
-def plot4x4(samples):
 
-    IMG_SIZE = samples.shape[1]
-
-    img_grid = np.zeros((4 * IMG_SIZE, 4 * IMG_SIZE, 3))
-
-    for i in range(16):
-        py, px = IMG_SIZE * int(i / 4), IMG_SIZE * (i % 4)
-        this_img = samples[i, :, :, :]
-        img_grid[py:py + IMG_SIZE, px:px + IMG_SIZE, :] = this_img
-
-    return img_grid
 
 
 def plot2x2(samples):
@@ -197,24 +150,6 @@ def plot2x2(samples):
 
     return img_grid
 
-
-def load_historical_model(sess, checkpoint_dir='checkpoints'):
-
-    # check and create model dir
-    if os.path.exists(checkpoint_dir) is False:
-        os.mkdir(checkpoint_dir)
-
-    if 'checkpoint' in os.listdir(checkpoint_dir):
-        # training from the last checkpoint
-        print('loading model from the last checkpoint ...')
-        saver = tf.train.Saver(get_variables_to_restore(['Generator_scope','Discriminator_scope'],
-                                                        ['Adam','Adam_1']))
-        latest_checkpoint = tf.train.latest_checkpoint(checkpoint_dir)
-        saver.restore(sess, latest_checkpoint)
-        print(latest_checkpoint)
-        print('loading finished!')
-    else:
-        print('no historical model found, start training from scratch!')
 
 
 def load_images(image_dir, img_size):
